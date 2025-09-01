@@ -1,30 +1,30 @@
-# Neon Space Invaders (Pygame)
+# ネオン・スペースインベーダー（Pygame）
 
-A fancy, modern take on Space Invaders with neon glow visuals, particle effects, starfield parallax, and synthesized sounds generated on first run.
+スペースインベーダーを現代風にアレンジ。ネオンのグロー表現、パーティクル、星空パララックス、初回起動時に自動生成される合成サウンドを備えています。
 
-## Features
-- Neon additive glow rendering (no external textures required)
-- Parallax starfield background and screen shake
-- Particle explosions and engine trail
-- Power-ups for multishot
-- Procedurally generated WAV sound effects (laser, hit, explosion, powerup)
+## 機能
+- 外部テクスチャ不要のネオン加算グロー描画
+- パララックスの星空背景とスクリーンシェイク
+- パーティクルによる爆発とエンジンのトレイル
+- マルチショットのパワーアップ
+- 初回起動時に生成される WAV サウンド（レーザー、ヒット、爆発、パワーアップ）
 
-## Run
-1. Ensure Python 3.9+ is installed.
-2. Install Pygame:
-   - `pip install -r requirements.txt` (or `pip install pygame`)
-3. Launch the game:
+## 実行方法
+1. Python 3.9 以上を用意してください。
+2. 依存関係（Pygame）をインストールします。
+   - `pip install -r requirements.txt`（または `pip install pygame`）
+3. ゲームを起動します。
    - `python space_invaders_neon.py`
 
-## Controls
-- Move: Arrow keys or WASD
-- Shoot: Space
-- Restart after Game Over: R
-- Quit: Esc
+## 操作
+- 移動: 矢印キー または WASD
+- 射撃: Space
+- Game Over 後のリスタート: R
+- 終了: Esc
 
-## Notes
-- On first run, sound assets are generated under `assets/sounds/`.
-- If audio initialization fails, the game runs without sound.
-- Toggle performance/visual options at the top of `space_invaders_neon.py`.
+## 注意事項
+- 初回起動時、サウンドアセットは `assets/sounds/` に生成されます。
+- オーディオ初期化に失敗した場合は、サウンドなしで動作します。
+- パフォーマンス／ビジュアルの各種オプションは `space_invaders_neon.py` の先頭付近で切り替え可能です。
 
-Enjoy blasting invaders in neon!
+ネオンの世界で侵略者を撃退しよう！

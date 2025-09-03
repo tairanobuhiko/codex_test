@@ -236,6 +236,29 @@ class Bullet:
         additive_blit(surf, self.sprite, (self.rect().x, self.rect().y))
 
 
+class EnemyBullet:
+    # 敵が発射する弾（下方向移動）
+    def __init__(self, x, y, color=None):
+        self.x = x
+        self.y = y
+        self.speed = 360
+        self.alive = True
+        c = color if color is not None else NEON_ORANGE
+        self.sprite = neon_rect((4, 18), c, glow=2)
+
+    def update(self, dt):
+        self.y += self.speed * dt
+        if self.y > HEIGHT + 40:
+            self.alive = False
+
+    def rect(self):
+        w, h = self.sprite.get_size()
+        return pygame.Rect(int(self.x - w // 2), int(self.y - h // 2), w, h)
+
+    def draw(self, surf):
+        additive_blit(surf, self.sprite, (self.rect().x, self.rect().y))
+
+
 class Enemy:
     def __init__(self, x, y, kind=0):
         self.x = x
@@ -294,6 +317,8 @@ class Player:
         self.multi = 1
         self.sprite = neon_rect((36, 22), NEON_CYAN, glow=3, border_radius=10)
         self.tail_timer = 0.0
+        # 日本語コメント: 被弾後の無敵時間（秒）
+        self.invincible = 0.0
 
     def update(self, dt, keys):
         ax = 0
@@ -305,6 +330,8 @@ class Player:
         self.x = clamp(self.x, 40, WIDTH - 40)
         self.cd = max(0.0, self.cd - dt)
         self.tail_timer += dt
+        if self.invincible > 0:
+            self.invincible = max(0.0, self.invincible - dt)
 
     def shoot(self, bullets, sounds):
         if self.cd > 0:
@@ -324,7 +351,11 @@ class Player:
         return pygame.Rect(int(self.x - w // 2), int(self.y - h // 2), w, h)
 
     def draw(self, surf):
-        additive_blit(surf, self.sprite, (self.rect().x, self.rect().y))
+        # 日本語コメント: 無敵中は点滅表示でフィードバック
+        if self.invincible > 0 and int(self.invincible * 10) % 2 == 0:
+            pass
+        else:
+            additive_blit(surf, self.sprite, (self.rect().x, self.rect().y))
         # engine trail
         if self.tail_timer > 0.03:
             self.tail_timer = 0
@@ -354,6 +385,7 @@ class Game:
     def reset(self):
         self.player = Player()
         self.bullets = []
+        self.enemy_bullets = []
         self.enemies = []
         self.powerups = []
         self.particles = []
@@ -365,6 +397,24 @@ class Game:
         self.time = 0
         self.shake = 0
         self.game_over = False
+
+    def damage_player(self):
+        """日本語コメント: 被弾/接触時にライフを減らし、無敵時間を付与"""
+        if self.game_over or self.player.invincible > 0:
+            return
+        self.lives -= 1
+        self.player.invincible = 1.2
+        if SCREEN_SHAKE:
+            self.shake = max(self.shake, 10)
+        s = self.sounds.get("hit") or self.sounds.get("explosion")
+        if s:
+            s.set_volume(0.5)
+            s.play()
+        # ささやかな被弾エフェクト
+        for _ in range(20):
+            self.particles.append(Particle(self.player.x, self.player.y, NEON_CYAN))
+        if self.lives <= 0:
+            self.game_over = True
 
     def spawn_wave(self, wave):
         cols = 9
@@ -393,6 +443,9 @@ class Game:
 
         for e in self.enemies:
             e.update(dt, self.time)
+            # 日本語コメント: 敵のランダム射撃（確率はdtに比例）
+            if random.random() < 0.35 * dt:
+                self.enemy_bullets.append(EnemyBullet(e.x, e.y + 20, color=e.color))
         # Enemies downward drift over time
         for e in self.enemies:
             e.base_y += 4 * dt
@@ -418,6 +471,11 @@ class Game:
                         self.shake = 8
         self.enemies = [e for e in self.enemies if e.alive]
 
+        # 日本語コメント: 敵弾の更新
+        for eb in self.enemy_bullets:
+            eb.update(dt)
+        self.enemy_bullets = [eb for eb in self.enemy_bullets if eb.alive]
+
         # Power-ups
         for p in self.powerups:
             p.update(dt)
@@ -429,6 +487,18 @@ class Game:
                     s.set_volume(0.45)
                     s.play()
         self.powerups = [p for p in self.powerups if p.alive]
+
+        # 日本語コメント: プレイヤーと敵弾の衝突
+        pr = self.player.rect()
+        for eb in list(self.enemy_bullets):
+            if eb.rect().colliderect(pr):
+                eb.alive = False
+                self.damage_player()
+
+        # 日本語コメント: プレイヤーと敵本体の衝突
+        for e in self.enemies:
+            if e.rect().colliderect(pr):
+                self.damage_player()
 
         # Particles
         for pa in self.particles:
@@ -495,6 +565,8 @@ class Game:
             p.draw(world)
         for b in self.bullets:
             b.draw(world)
+        for eb in self.enemy_bullets:
+            eb.draw(world)
         for e in self.enemies:
             e.draw(world)
         for p in self.powerups:
@@ -550,4 +622,3 @@ if __name__ == "__main__":
         print("Error:", e)
         pygame.quit()
         raise
-
